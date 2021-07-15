@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<title>klee359</title>
+<style>
+
+  body {
+    font: 10px sans-serif;
+  }
+
+  .label {
+    font-weight: bold;
+  }
+
+  .tile {
+    shape-rendering: crispEdges;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+</style>
+<h1 style="font-size:25px; padding-left: 250px;">Visualizing Wizarding Houses and Spells</h1>
+</head>
+<body>
+    <script src="../lib/d3.v5.min.js"></script>
+    <script src="../lib/d3-dsv.min.js"></script>
+    <script src="../lib/d3-fetch.min.js"></script>
+  <script>
+    // using http://bl.ocks.org/mbostock/3202354 as a starting point but basically changed everything because it wasn't very helpful
+
+
+    var wrapper = d3.select("body").append("div").attr("id","wrapper").style("height",height).style("width",width*0.8);
+    d3.select("#wrapper").append("p").text("Worldwide Earthquake stats 2000-2015").style("text-align", "center");
+
+    var margin = {top: 20, right: 90, bottom: 30, left: 120},
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        buckets = {"0 to 9":[],"10 to 99":[],"100 to 499":[],"500 or above":[]};
+
+    d3.csv("earthquakes.csv", function(data) {
+      Category = data.Category;
+        buckets[Category].push({
+          States: data.States,
+          ["2010"]: +data["2010"],
+          ["2011"]: +data["2011"],
+          ["2012"]: +data["2012"],
+          ["2013"]: +data["2013"],
+          ["2014"]: +data["2014"],
+          ["2015"]: +data["2015"]
+        });
+        return {
+          Category: data.Category,
+          States: data.States,
+          ["2010"]: +data["2010"],
+          ["2011"]: +data["2011"],
+          ["2012"]: +data["2012"],
+          ["2013"]: +data["2013"],
+          ["2014"]: +data["2014"],
+          ["2015"]: +data["2015"]
+        };
+    }).then(function (data){
+      var bucket0_9 = [],
+          bucket10_99 = [],
+          bucket100_499 = [],
+          bucket500 = [];
+
+      data.forEach(function(d) {
+
+        // create a bucket for each house
+        if (d.Category == "0 to 9"){
+          bucket0_9.push(["2010", +d["2010"], d.States]);
+          bucket0_9.push(["2011", +d["2011"], d.States]);
+          bucket0_9.push(["2012", +d["2012"], d.States]);
+          bucket0_9.push(["2013", +d["2013"], d.States]);
+          bucket0_9.push(["2014", +d["2014"], d.States]);
+          bucket0_9.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "10 to 99"){
+          bucket10_99.push(["2010", +d["2010"], d.States]);
+          bucket10_99.push(["2011", +d["2011"], d.States]);
+          bucket10_99.push(["2012", +d["2012"], d.States]);
+          bucket10_99.push(["2013", +d["2013"], d.States]);
+          bucket10_99.push(["2014", +d["2014"], d.States]);
+          bucket10_99.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "100 to 499"){
+          bucket10_99.push(["2010", +d["2010"], d.States]);
+          bucket10_99.push(["2011", +d["2011"], d.States]);
+          bucket10_99.push(["2012", +d["2012"], d.States]);
+          bucket10_99.push(["2013", +d["2013"], d.States]);
+          bucket10_99.push(["2014", +d["2014"], d.States]);
+          bucket10_99.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "500 or above"){
+          bucket500.push(["2010", +d["2010"], d.States]);
+          bucket500.push(["2011", +d["2011"], d.States]);
+          bucket500.push(["2012", +d["2012"], d.States]);
+          bucket500.push(["2013", +d["2013"], d.States]);
+          bucket500.push(["2014", +d["2014"], d.States]);
+          bucket500.push(["2015", +d["2015"], d.States]);
+        }
+      });
+
+
+      // var xList = d3.set(buckets.map(function(d) { return d[2]; })).values(),
+      //     yList = d3.set(buckets.map(function(d) { return d[0]; })).values();
+      console.log(bucket500);
+      x_domain = buckets["0 to 9"].map(d => d.States); //buckets is an object with 4 arrays, buckets["0 to 9"] is an array
+      // console.log(Math.max(x_domain,3,0)); //map lets you iterate over every element in the array
+
+      var maxZ =0;
+
+      Object.keys(buckets).forEach(function(key) {
+        v1 = d3.max(buckets[key].map(d => d["2010"]));
+        v2 = d3.max(buckets[key].map(d => d["2011"]));
+        v3 = d3.max(buckets[key].map(d => d["2012"]));
+        v4 = d3.max(buckets[key].map(d => d["2013"]));
+        v5 = d3.max(buckets[key].map(d => d["2014"]));
+        v6 = d3.max(buckets[key].map(d => d["2015"]));
+        maxZ = Math.max(maxZ,v1,v2,v3,v4,v5,v6);
+      });
+      console.log(maxZ)
+
+      var xScale = d3.scaleBand()
+                           .domain(x_domain.sort())
+                           .range([0, width]),
+          yScale = d3.scaleBand()
+                           .domain(["2015","2014","2013","2012","2011","2010"])
+                           .range([height, 0]),
+          zScale = d3.scaleQuantile()
+                           .domain([0, 8, maxZ])
+                           .range(['#f7fcf0','#e0f3db','#ccebc5','#a8ddb5','#7bccc4','#4eb3d3','#2b8cbe','#0868ac','#084081']);
+
+      var svg = d3.select("#wrapper").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left*0.7 + "," + margin.top*0.7 + ")");
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+
+      // 4. Call the y axis in a group tag
+      svg.append("g")
+          .attr("class", "y axis")
+          .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+
+      svg.selectAll(".tile")
+      .data(buckets["0 to 9"])
+      .enter().append("rect")
+            .attr("x", function(d) { return xScale(d["0 to 9"].States); })
+            .attr("y", function(d) { return yScale(d[0]); })
+            .attr("width", width/(x_domain.length)-2)
+            .attr("height",  height/(6)-2)
+            .style("fill", function(d) { return zScale(d[1]); });
+
+    //   svg.selectAll(".tile")
+    //       .data(buckets)
+    //     .enter().append("rect")
+    //       .attr("class", "tile")
+    //       .attr("x", function(d) { return xScale(d["0 to 9"].States); })
+    //       .attr("y", function(d) { return yScale(d[0]); })
+    //       .attr("width", width/(x_domain.length)-2)
+    //       .attr("height",  height/(6)-2)
+    //       .style("fill", function(d) { return zScale(d[1]); });
+
+    //   // Add a legend for the color values.
+    //   var legend = svg.selectAll(".legend")
+    //       .data([0].concat(zScale.quantiles()), function(d){ return d; })
+    //     .enter().append("g")
+    //       .attr("class", "legend")
+    //       .attr("transform", function(d, i) { return "translate(" + (width + 20) + "," + (20 + i * 20) + ")"; });
+
+    //   legend.append("rect")
+    //       .attr("width", 20)
+    //       .attr("height", 20)
+    //       .style("fill", zScale);
+
+    //   legend.append("text")
+    //       .attr("x", 26)
+    //       .attr("y", 10)
+    //       .attr("dy", ".35em")
+    //       .text(function(d) {
+    //         return Math.round(d)+"+";
+    //       });
+
+    //   svg.append("text")
+    //       .attr("class", "label")
+    //       .attr("x", width + 20)
+    //       .attr("y", 10)
+    //       .attr("dy", ".35em")
+    //       .text("No of Spells");
+
+    //   // Add an x-axis with label.
+    //   svg.append("g")
+    //       .attr("class", "x axis")
+    //       .attr("transform", "translate(0," + height + ")")
+    //       .call(d3.svg.axis().scale(xScale).orient("bottom"))
+    //     .append("text")
+    //       .attr("class", "label")
+    //       .attr("x", width-5)
+    //       .attr("y", -6)
+    //       .attr("text-anchor", "end")
+    //       .text("Spell");
+
+    //   // Add a y-axis with label.
+    //   svg.append("g")
+    //       .attr("class", "y axis")
+    //       .call(d3.svg.axis().scale(yScale).orient("left"))
+    //     .append("text")
+    //       .attr("class", "label")
+    //       .attr("y", 6)
+    //       .attr("x", -5)
+    //       .attr("dy", ".71em")
+    //       .attr("text-anchor", "end")
+    //       .attr("transform", "rotate(-90)")
+    //       .text("Book");
+
+
+    //   // using the given http://bl.ocks.org/jfreels/6734823 as a starting point
+    //   var houses = ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"];
+
+    //   var houseSelect = d3.select('body')
+    //                     .append('text')
+    //                     .attr('class','dropdown')
+    //                     .text('House:  ');
+
+    //   var select = d3.select('body')
+    //                .append('select')
+    //                .attr('class','select')
+    //                .on('change',onchange);
+
+    //   var options = select.selectAll('option')
+    //                       .data(houses).enter()
+    //                       .append('option')
+    //                       .text(function (d) { return d; });
+
+    //   function onchange() {
+    //     selectValue = d3.select('select').property('value');
+
+    //     if(selectValue == "Gryffindor") {
+    //       buckets = bucketGryffindor;
+    //     } else if(selectValue == "Hufflepuff") {
+    //       buckets = bucketHufflepuff;
+    //     } else if(selectValue == "Ravenclaw") {
+    //       buckets = bucketRavenclaw;
+    //     } else if(selectValue == "Slytherin") {
+    //       buckets = bucketSlytherin;
+    //     }
+
+    //     zScale.domain([0, 8, d3.max(buckets, function(d) { return d[1]; })]);
+
+    //     var rec = svg.selectAll(".tile").data(buckets);
+
+    //     var leg = svg.selectAll(".legend").data([0].concat(zScale.quantiles()), function(d){ return d; });
+    //     leg.exit().remove();
+
+    //     rec.transition()
+    //        .duration(300)
+    //        .attr("x", function(d) { return xScale(d[2]); })
+    //        .attr("y", function(d) { return yScale(d[0]); })
+    //        .attr("width", width/(xList.length)-2)
+    //        .attr("height",  height/(yList.length)-2)
+    //        .style("fill", function(d) { return zScale(d[1]); });
+
+    //     // i don't know how to update the legend so i redraw it
+    //     var legendChange = svg.selectAll(".legend")
+    //       .data([0].concat(zScale.quantiles()), function(d){ return d; })
+    //     .enter().append("g")
+    //       .attr("class", "legend")
+    //       .attr("transform", function(d, i) { return "translate(" + (width + 20) + "," + (20 + i * 20) + ")"; });
+
+    //   legendChange.append("rect")
+    //       .attr("width", 20)
+    //       .attr("height", 20)
+    //       .style("fill", zScale);
+
+    //   legendChange.append("text")
+    //       .attr("x", 26)
+    //       .attr("y", 10)
+    //       .attr("dy", ".35em")
+    //       .text(function(d) {
+    //         return Math.round(d)+"+";
+    //       });
+
+    //     rec.exit().remove();
+
+    //   };
+    });
+
+  </script>

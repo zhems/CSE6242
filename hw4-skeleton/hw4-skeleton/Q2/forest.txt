@@ -1,0 +1,6 @@
+What is the main reason to use a random forest versus a decision tree? (<= 50 words)
+How long did your random forest take to run? (in seconds)
+What accuracy (to two decimal places, xx.xx%) were you able to obtain?
+1. A high-depth tree is more prone to overfitting than a random forest with shallower trees. A random forest gives better generalization
+2. 120-150 seconds
+3. 90.84%

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+  <style>
+
+  .states {
+    fill: red;
+  }
+  .d3-tip {
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+  }
+
+  .border_states {
+    fill: none;
+    stroke: #fff;
+    stroke-linejoin: round;
+  }
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+  }
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+  }
+  </style>
+<svg width="1160" height="600"></svg>
+  <script src="../lib/d3.v5.min.js"></script>
+  <script src="../lib/d3-dsv.min.js"></script>
+  <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+  <script src="../lib/topojson.v2.min.js"></script>
+  <script src="../lib/d3-tip.min.js"></script>
+  <script src="../lib/d3-fetch.min.js"></script>
+  <script>
+
+    var svg = d3.select("svg"),
+        width = +svg.attr("width")-200,
+        height = +svg.attr("height");
+
+    var earthquakes = d3.map();
+
+    var projection = d3.geoAlbersUsa().translate([width/2,height/2]);
+    var path = d3.geoPath(projection);
+    // var path = d3.geoPath();
+
+
+    var g = svg.append("g")
+        .attr("class", "key")
+        .attr("transform", "translate(0,40)");
+
+
+    var max_count=0
+    var promises = [
+      d3.json("states-10m.json"),
+      d3.csv("state-earthquakes.csv", function(d) { 
+        // console.log(d.States);
+        max_count=Math.max(max_count,+d["Total Earthquakes"])
+        earthquakes.set(d.States, +d["Total Earthquakes"]);
+        // return {
+        //   States: d.States,
+        //   Region: d.Region,
+        //   ["2010"]: +d["2010"],
+        //   ["2011"]: +d["2011"],
+        //   ["2012"]: +d["2012"],
+        //   ["2013"]: +d["2013"],
+        //   ["2014"]: +d["2014"],
+        //   ["2015"]: +d["2015"],
+        //   Total: +d["Total Earthquakes"]
+        // }; 
+    })]
+    Promise.all(promises).then(ready)
+
+    function ready([us]) {
+      // console.log(earthquakes)
+      // console.log(us)
+      // console.log(topojson.feature(us, us.objects.states).features)
+      /* Initialize tooltip */
+      var tip = d3.tip().attr('class', 'd3-tip').offset([-10, 0]).html(function(d) {
+    return "<strong>Frequency:</strong> <span style='color:red'>" + d.OGrate + "</span>";
+    })
+      svg.call(tip)
+
+
+      var color = d3.scaleLinear()
+          .domain([0,Math.log(max_count)/2, Math.log(max_count)])
+          .range(["#fed976","#fc4e2a","#800026"])
+
+      svg.append("g")
+          .attr("class", "states")
+        .selectAll("path")
+        .data(topojson.feature(us, us.objects.states).features)
+        .enter().append("path")
+          .attr("fill", function(d) { d.OGrate = earthquakes.get(d.properties.name);
+            return color(d.rate = Math.log(earthquakes.get(d.properties.name))); })
+          .attr("d", path)
+        .append("title")
+          .text(function(d) { return d.OGrate; })
+          .on('mouseover', tip.show)
+          .on('mouseout', tip.hide)
+
+      svg.append("path")
+          .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+          .attr("class", "border_states")
+          .attr("d", path);
+
+      console.log(Math.log(max_count))
+      var y = d3.scaleLinear()
+          .domain([0, 0.5, 1])
+          .range(["#fed976","#fc4e2a","#800026"]);
+      svg.selectAll("rect")
+        .data(d3.range(0,.96,0.11))
+        .enter().append("rect")
+          .attr("height", 30)
+          .attr("y", function (d){ return 90 +d *320})
+          .attr("x", 900)
+          .attr("width", 30)
+          .style("fill", function (d) { return y(d)}).attr("class", "legend");
+
+      svg.selectAll("text")
+        .data(d3.range(0,.96,0.11))
+        .enter().append("text")
+          .attr("y", function (d){ return 110 +d *320})
+          .attr("x", 900+35)
+          .text(function (d){if(d==0) return 1; return Math.round(Math.exp(d*Math.log(max_count)))}).attr("class", "text_legend");
+
+      svg.append("text").attr("x", 835).attr("y", 75).text("Earthquake Frequency").style("font-weight", "bold")
+      // g.call(d3.axisLeft(y))
+      //     .tickSize(10)
+      // var x = d3.scaleLinear()
+      //     .domain([0, Math.log(max_count)])
+      //     .rangeRound([0, max_count]);
+      // g.selectAll("rect")
+      //   .data(color.range().map(function(d) {
+      //       d = color.invertExtent(d);
+      //       if (d[0] == null) d[0] = x.domain()[0];
+      //       if (d[1] == null) d[1] = x.domain()[1];
+      //       return d;
+      //     }))
+      //   .enter().append("rect")
+      //     .attr("height", 8)
+      //     .attr("x", function(d) { return x(d[0]); })
+      //     .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+      //     .attr("fill", function(d) { return color(d[0]); });
+
+      // g.append("text")
+      //     .attr("class", "caption")
+      //     .attr("x", x.range()[0])
+      //     .attr("y", -6)
+      //     .attr("fill", "#000")
+      //     .attr("text-anchor", "start")
+      //     .attr("font-weight", "bold")
+      //     .text("Unemployment rate");
+
+      // g.call(d3.axisBottom(x)
+      //     .tickSize(13)
+      //     .tickFormat(function(x, i) { return i ? x : x + "%"; })
+      //     .tickValues(color.domain()))
+      //   .select(".domain")
+      //     .remove();
+
+    }
+
+</script>

@@ -1,0 +1,4 @@
+http://bl.ocks.org/alansmithy/e984477a741bc56db5a5
+https://bl.ocks.org/mbostock/3808234
+https://bl.ocks.org/mbostock/3808218
+https://stackoverflow.com/questions/41154231/d3-how-do-i-parse-a-csv-string-into-an-object-where-keys-are-column-names-and-v

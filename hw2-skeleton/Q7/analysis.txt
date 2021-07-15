@@ -1,0 +1,25 @@
+ 1. Ease to develop
+        R: Fastest, quick and dirty done in 5-6 lines of code, unless using Shiny library to build interactive visualisations that users can interact with
+
+        Tableau: Relatively fast
+        D3: Most tedious and troublesome
+2. Ease to maintain the visualization
+        R: Easy if simple visualisation, trouble if using Shiny library
+
+        Tableau: Relatively easy
+        D3: Most troublesome to maintain
+3. Usability of visualization
+        R: Static and non-interactive, unless using Shiny library
+
+        Tableau: Slightly interactive
+        D3: Can be very usable and interactive
+4. Scalability of visualization to “large” datasets
+        R: Yes
+
+        Tableau: Yes
+        D3: Yes
+5. System requirements to run the visualization
+        R: Free but need to install packages. If using Shiny library to make, the visualisation can be exported as a standalone app.
+
+        Tableau: Software is expensive
+        D3: Browsers

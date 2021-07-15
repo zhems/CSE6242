@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="utf-8">
+      <title>zchia3</title>
+      <style>
+
+      body {
+        font: 20px sans-serif;
+      }
+
+      .label {
+        font-weight: bold;
+      }
+      .bar { fill: steelblue; }
+      .line {
+          fill: none;
+          stroke: #ffab00;
+          stroke-width: 2;
+      }
+      .tile {
+        shape-rendering: crispEdges;
+      }
+      #header2{
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      </style>
+      <h1 style="font-size:15px; padding-left: 210px;">US Earthquakes by Region 2010-2015</h1>
+  </head>
+  <body>
+    <script src="../lib/d3.v5.min.js"></script>
+    <script src="../lib/d3-dsv.min.js"></script>
+    <script src="../lib/d3-fetch.min.js"></script>
+    <script>
+      var margin = {top: 15, right: 90, bottom: 20, left: 120},
+      width = 700 - margin.left - margin.right,
+      height = 260 - margin.top - margin.bottom;
+
+
+      var wrapper = d3.select("body").append("div").attr("id","wrapper").attr("style","height: " + height + ";").attr("style","width: " + width + ";");
+      // d3.select("#wrapper").append("p").text("Worldwide Earthquake stats 2000-2015").style("text-align", "center");
+
+      var wrapper3 = d3.select("body").append("div").attr("id","wrapper3").attr("style","height: " + height + ";").attr("style","width: " + width + ";");
+      header2 = wrapper3.append("div").attr("style","width: " + width + ";").attr("style","padding-left: " +210+"px;");
+      header2.append("span").attr("id","header2").text("  ");
+
+      var wrapper2 = d3.select("body").append("div").attr("id","wrapper2").attr("style","height: " + height + ";").attr("style","width: " + width + ";");
+
+      d3.csv("state-year-earthquakes.csv", function(data) {
+        return {
+          state: data.state,
+          region: data.region,
+          year: +data.year,
+          count: +data.count
+        };
+      }).then(function (data){
+        var regions = Array.from(new Set(data.map(d => d.region))).sort();
+        var years = Array.from(new Set(data.map(d => d.year)));
+        var buckets = {};
+
+        var summary_table = {},sums = {};
+        regions.forEach(function (reg){ //create object with arrays for each region
+          summary_table[reg] = [];
+          sums[reg]={};
+          buckets[reg] = {}
+          years.forEach(function (year){
+            sums[reg][year] = 0;
+            buckets[reg][year] = [];
+          })
+        })
+
+        data.forEach(function (d){ //populating each array:region pair
+          buckets[d.region][d.year].push({state: d.state, count: +d.count});
+          sums[d.region][d.year] = sums[d.region][d.year] + d.count;
+        });
+
+        var maxY = 0;
+        regions.forEach(function (reg){
+          years.forEach(function (y){
+            summary_table[reg].push({year: y, count: sums[reg][y]});
+            maxY = Math.max(maxY,sums[reg][y]);
+            buckets[reg][y].sort(function (a,b){if(a.state<b.state){return 1;}else{return -1;}});
+            buckets[reg][y].sort(function (a,b){return a.count-b.count});
+          })
+        });
+
+        var xScale = d3.scaleTime()
+            .domain(d3.extent(summary_table[regions[0]], function (d) {return new Date(d.year,0,1);})) // input
+            .range([0, width]); // output
+        var yScale = d3.scaleLinear()
+            .domain([0, maxY]) // input 
+            .range([height, 0]); // output 
+
+        var svg = d3.select("#wrapper").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        // LINES
+        var lines = {};
+        var colours = {}; colours[regions[0]]="#FFC300",colours[regions[1]]="#FF5733",colours[regions[2]]="#C70039",colours[regions[3]]="#900C3F";
+        regions.forEach(function (reg){ //create object with arrays for each region
+          lines[reg] = d3.line().x(function(d) {return xScale(new Date(d.year,0,1));}).y(function(d) { return yScale(d.count); });
+          svg.append("path").datum(summary_table[reg]).attr("class", "line").attr("d", lines[reg]).style("stroke",colours[reg]);
+        });
+        // AXES
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+
+        // LEGEND
+        var y_p=0;
+        regions.forEach(function (reg) {
+          svg.append("circle").attr("cx",width-80).attr("cy",y_p).attr("r", 6).style("fill", colours[reg]);
+          svg.append("text").attr("x", width-60).attr("y", y_p).text(reg).style("font-size", "12px").attr("alignment-baseline","middle");
+          y_p += 17;
+        });
+
+        //CIRCLES
+        var circles = {};
+        var svg2;
+        regions.forEach(function (reg) {
+          circles[reg] = svg.selectAll(".dot"+reg).data(summary_table[reg]).enter();
+          circles[reg].append("circle")
+            .attr("class", "dot"+reg)
+            .attr("cx", function(d) { return xScale(new Date(d.year,0,1)) })
+            .attr("cy", function(d) { return yScale(d.count) })
+            .attr("r", function(d) { return 4}).style("fill", colours[reg])
+            .on("mouseover", function(d){
+              d3.select("#header2").remove();
+              header2.append("span").attr("id","header2").text(reg+" Region Earthquakes "+d.year.toString());
+              d3.select(this).attr("r", function(d) { return 12});
+
+              var wrapper2 = d3.select("body").append("div").attr("id","wrapper2").attr("style","height: " + height + ";").attr("style","width: " + width + ";");
+              var dataset = buckets[reg][d.year];
+              var states = dataset.map(dat => dat.state)
+              var xScale2 = d3.scaleLinear()
+                  .domain([0,d3.max(dataset, function (dat){return dat.count})]) // input
+                  .range([0, width]); // output
+              var yScale2 = d3.scaleBand()
+                  .domain(states) // input 
+                  .range([height, 0]).padding(0.1); // output 
+
+              var svg2 = d3.select("#wrapper2").append("svg")
+                  .attr("width", width + margin.left + margin.right)
+                  .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+              svg2.append("g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate(0," + height + ")")
+                  .call(d3.axisBottom(xScale2).ticks(5).tickSizeInner(-height)); // Create an axis component with d3.axisBottom
+              svg2.append("g")
+                  .attr("class", "y axis")
+                  .call(d3.axisLeft(yScale2)); // Create an axis component with d3.axisLeft
+              svg2.selectAll(".bar")
+                  .data(dataset)
+                .enter().append("rect")
+                  .attr("class", "bar")
+                  .attr("x", function(d) { return 0; })
+                  .attr("width", function (d) { return xScale2(d.count);})
+                  .attr("y", function(d) { return yScale2(d.state); })
+                  .attr("height", yScale2.bandwidth());
+
+              var ticks = svg2.append("g")     
+                    .attr("class", "grid")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(function() { return d3.axisBottom(xScale2).ticks(5)}
+                        )
+            })
+            .on("mouseout", function(d){
+              d3.select("#header2").remove();
+              d3.select(this).attr("r", function(d) { return 4});
+              d3.select("#wrapper2").remove();
+            });
+        });
+
+      });
+
+    </script>
+</body>

@@ -1,0 +1,1 @@
+Use nonlinear scales when there is skewness towards large values, i.e. when thereare a minority of points that are much larger than the bulk of the data.

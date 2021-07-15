@@ -1,0 +1,27 @@
+.chart div {
+  font: 10px sans-serif;
+  background-color: steelblue;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: white;
+}
+
+.chart rect {
+  fill: steelblue;
+}
+
+.chart text {
+  fill: white;
+  font: 3px sans-serif;
+  text-anchor: end;
+}
+.bar {
+  fill: steelblue;
+}
+.p text{
+  font: 10px sans-serif;
+}
+.rect {
+  fill: white;
+}

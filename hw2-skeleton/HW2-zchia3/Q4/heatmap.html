@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<title>zchia3</title>
+<style>
+
+  body {
+    font: 20px sans-serif;
+  }
+
+  .label {
+    font-weight: bold;
+  }
+
+  .tile {
+    shape-rendering: crispEdges;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+</style>
+<h1 style="font-size:25px; padding-left: 150px;">Visualizing Earthquake Counts by State 2010-2015 (M3+)</h1>
+</head>
+<body>
+    <script src="../lib/d3.v5.min.js"></script>
+    <script src="../lib/d3-dsv.min.js"></script>
+    <script src="../lib/d3-fetch.min.js"></script>
+  <script>
+    // using http://bl.ocks.org/mbostock/3202354 as a starting point but basically changed everything because it wasn't very helpful
+
+
+
+    var margin = {top: 50, right: 90, bottom: 30, left: 120},
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+
+    var wrapper = d3.select("body").append("div").attr("id","wrapper").attr("style","height: " + height + ";").attr("style","width: " + width + ";");
+    // d3.select("#wrapper").append("p").text("Worldwide Earthquake stats 2000-2015").style("text-align", "center");
+
+    buckets = {"0 to 9":[],"10 to 99":[],"100 to 499":[],"500 or above":[]};
+
+    d3.csv("earthquakes.csv", function(data) {
+      Category = data.Category;
+        buckets[Category].push({States: data.States, Year: "2010", Value: +data["2010"]});
+        buckets[Category].push({States: data.States, Year: "2011", Value: +data["2011"]});
+        buckets[Category].push({States: data.States, Year: "2012", Value: +data["2012"]});
+        buckets[Category].push({States: data.States, Year: "2013", Value: +data["2013"]});
+        buckets[Category].push({States: data.States, Year: "2014", Value: +data["2014"]});
+        buckets[Category].push({States: data.States, Year: "2015", Value: +data["2015"]});
+        return {
+          Category: data.Category,
+          States: data.States,
+          ["2010"]: +data["2010"],
+          ["2011"]: +data["2011"],
+          ["2012"]: +data["2012"],
+          ["2013"]: +data["2013"],
+          ["2014"]: +data["2014"],
+          ["2015"]: +data["2015"]
+        };
+    }).then(function (data){
+      var bucket0_9 = [],
+          bucket10_99 = [],
+          bucket100_499 = [],
+          bucket500 = [];
+
+      data.forEach(function(d) {
+
+        // create a bucket for each house
+        if (d.Category == "0 to 9"){
+          bucket0_9.push(["2010", +d["2010"], d.States]);
+          bucket0_9.push(["2011", +d["2011"], d.States]);
+          bucket0_9.push(["2012", +d["2012"], d.States]);
+          bucket0_9.push(["2013", +d["2013"], d.States]);
+          bucket0_9.push(["2014", +d["2014"], d.States]);
+          bucket0_9.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "10 to 99"){
+          bucket10_99.push(["2010", +d["2010"], d.States]);
+          bucket10_99.push(["2011", +d["2011"], d.States]);
+          bucket10_99.push(["2012", +d["2012"], d.States]);
+          bucket10_99.push(["2013", +d["2013"], d.States]);
+          bucket10_99.push(["2014", +d["2014"], d.States]);
+          bucket10_99.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "100 to 499"){
+          bucket10_99.push(["2010", +d["2010"], d.States]);
+          bucket10_99.push(["2011", +d["2011"], d.States]);
+          bucket10_99.push(["2012", +d["2012"], d.States]);
+          bucket10_99.push(["2013", +d["2013"], d.States]);
+          bucket10_99.push(["2014", +d["2014"], d.States]);
+          bucket10_99.push(["2015", +d["2015"], d.States]);
+        } else if (d.Category == "500 or above"){
+          bucket500.push(["2010", +d["2010"], d.States]);
+          bucket500.push(["2011", +d["2011"], d.States]);
+          bucket500.push(["2012", +d["2012"], d.States]);
+          bucket500.push(["2013", +d["2013"], d.States]);
+          bucket500.push(["2014", +d["2014"], d.States]);
+          bucket500.push(["2015", +d["2015"], d.States]);
+        }
+      });
+      selection_box = wrapper.append("div").attr("id","selection").attr("style","width: " + width + ";").attr("style","padding-left: " +200+"px;");
+      var selections = ["0 to 9", "10 to 99", "100 to 499", "500 or above"];
+      selection_box.append("span").text("Range of ");
+
+      var select = d3.select('#selection')
+        .append('select')
+          .attr('class','select')
+          .on('change',onchange);
+
+      var options = select
+        .selectAll('option')
+        .data(selections).enter()
+        .append('option')
+          .text(function (d) { return d; });
+
+      wrapper.append("div").attr("width", width + margin.left + margin.right);
+
+      // var svg = d3.select("body").append("svg")
+      //     .attr("width", width + margin.left + margin.right)
+      //     .attr("height", height + margin.top + margin.bottom)
+      //   .append("g")
+      //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      x0 = buckets["0 to 9"].map(d => d.States); //buckets is an object with 4 arrays, buckets["0 to 9"] is an array
+      x1 = buckets["10 to 99"].map(d => d.States);
+      x2 = buckets["100 to 499"].map(d => d.States);
+      x3 = buckets["500 or above"].map(d => d.States);
+      x0 = Array.from(new Set(x0));
+      x1 = Array.from(new Set(x1));
+      x2 = Array.from(new Set(x2));
+      x3 = Array.from(new Set(x3));
+      // console.log(Math.max(x_domain,3,0)); //map lets you iterate over every element in the array
+      x_domain = x1.concat(x2).concat(x3).concat(x0);
+      x_domain = Array.from(new Set(x_domain));
+      // console.log(x_domain);
+
+      // var maxZ =0;
+      // Object.keys(buckets).forEach(function(key) {
+      //   v1 = d3.max(buckets[key].map(d => d.Value));
+      //   maxZ = Math.max(maxZ,v1);
+      // });
+      var maxZ = d3.max(buckets["0 to 9"].map(d => d.Value));
+      var max0 = d3.max(buckets["0 to 9"].map(d => d.Value));
+      var max1 = d3.max(buckets["10 to 99"].map(d => d.Value));
+      var max2 = d3.max(buckets["100 to 499"].map(d => d.Value));
+      var max3 = d3.max(buckets["500 or above"].map(d => d.Value));
+      // console.log(maxZ);
+
+      var xScale = d3.scaleBand()
+                           .domain(x_domain.sort())
+                           .range([0, width]);
+      var yScale = d3.scaleBand()
+                           .domain(["2015","2014","2013","2012","2011","2010"])
+                           .range([height, 0]);
+      var zScale = d3.scaleLinear()
+                           .domain([0, maxZ])
+                           .range(['#f7fcf0','#084081']);
+
+      var svg = d3.select("#wrapper").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom+200)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var xScale0 = d3.scaleBand().domain(x0.sort()).range([0, width]);
+      var xScale1 = d3.scaleBand().domain(x1.sort()).range([0, width]);
+      var xScale2 = d3.scaleBand().domain(x2.sort()).range([0, width]);
+      var xScale3 = d3.scaleBand().domain(x3.sort()).range([0, width]);
+
+
+      svg.append("text").attr("x",300).attr("id", "mouse").attr("y",-20).text(" ").style("font-size", "15px");
+
+      svg.selectAll(".tile")
+      .data(buckets["0 to 9"])
+      .enter().append("rect")
+            .attr("x", function(d) { return xScale0(d.States); })
+            .attr("y", function(d) { return yScale(d.Year); })
+            .attr("width", width/x0.length)
+            .attr("class", "tile")
+            .attr("height",  height/(6)-2)
+            .style("fill", function(d) { return zScale(d.Value); })
+            .on("mouseover", function(d){
+                d3.select("#mouse").remove();
+                svg.append("text").attr("x",300).attr("id", "mouse").attr("y",-20).text(d.States+" "+d.Year+": "+d.Value).style("font-size", "15px");
+                });
+
+
+      x_axis = svg.append("g")
+          .attr("class", "x axis")
+          .attr("id", "x_ax")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(xScale0)); // Create an axis component with d3.axisBottom
+      // 4. Call the y axis in a group tag
+      svg.append("g")
+          .attr("id", "y_ax")
+          .attr("class", "y axis")
+          .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+
+      svg.append("text").attr("x",60).attr("class", "legend_header").attr("y",height+40).text("Count").style("font-size", "15px");
+      //legend
+      var increment = maxZ/9;
+      colours = [];
+      base = 0;
+      for(i=0;i<9;i++){colours.push(zScale(base)); base = base+increment;};
+      x_pos=60;
+      base =0;
+      colours.forEach(function (colour){
+          svg.append("rect").attr("x",x_pos).attr("class", "legend").attr("y",height+50).attr("width",50).attr("height",30).style("fill",colour);
+          svg.append("text").attr("x",x_pos).attr("class", "legend_text").attr("y",height+100).text(base).style("font-size", "15px");
+          x_pos = x_pos + 50; base+=increment;
+      });
+
+      previous_bucket = buckets["0 to 9"];
+      function onchange() {
+        selectValue = d3.select('select').property('value')
+        
+        if(selectValue == "0 to 9") {
+          curr_x = x0;
+          curr_xScale = xScale0;
+          zScale = d3.scaleLinear().domain([0, max0]).range(['#f7fcf0','#084081']);
+        } else if(selectValue == "10 to 99") {
+          curr_x = x1;
+          curr_xScale = xScale1;
+          zScale = d3.scaleLinear().domain([0, max1]).range(['#f7fcf0','#084081']);
+        } else if(selectValue == "100 to 499") {
+          curr_x = x2;
+          curr_xScale = xScale2;
+          zScale = d3.scaleLinear().domain([0, max2]).range(['#f7fcf0','#084081']);
+        } else if(selectValue == "500 or above") {
+          curr_x = x3;
+          curr_xScale = xScale3;
+          zScale = d3.scaleLinear().domain([0, max3]).range(['#f7fcf0','#084081']);
+        }
+        curr_bucket = buckets[selectValue];
+        // console.log(selectValue);
+        zScale.domain([0, d3.max(curr_bucket, function(d) { return d.Value; })]);
+        console.log(d3.max(curr_bucket, function(d) { return d.Value; }));
+        // var reset = svg.selectAll(".tile").data([]).exit().remove();
+        var rec = svg.selectAll(".tile").data(curr_bucket);
+
+        rec.enter().append("rect")
+            .attr("width", width/curr_x.length)
+            .attr("class", "tile")
+            .attr("height",  height/(6)-2)
+            .attr("x", function(d) { return curr_xScale(d.States); })
+            .attr("y", function(d) { return yScale(d.Year); })
+            .style("fill", function(d) { return zScale(d.Value); })
+            .on("mouseover", function(d){
+                d3.select("#mouse").remove();
+                svg.append("text").attr("x",300).attr("id", "mouse").attr("y",-20).text(d.States+" "+d.Year+": "+d.Value).style("font-size", "15px");
+                });
+        rec.transition()
+            .attr("width", width/curr_x.length)
+            .attr("class", "tile")
+            .attr("height",  height/(6)-2)
+            .attr("x", function(d) { return curr_xScale(d.States); })
+            .attr("y", function(d) { return yScale(d.Year); })
+            .style("fill", function(d) { return zScale(d.Value); });
+        rec.exit().remove();
+
+        // d3.select("#x_ax").remove();
+        // svg.append("g")
+        //     .attr("class", "x axis")
+        //     .attr("id", "x_ax")
+        //     .attr("transform", "translate(0," + height + ")")
+        //     .call(d3.axisBottom(curr_xScale)); // Create an axis component with d3.axisBottom
+        x_axis.call(d3.axisBottom(curr_xScale));
+
+        d3.selectAll(".legend_text").remove();
+
+        var increment = d3.max(curr_bucket, function(d) { return d.Value; })/9;
+        base = 0;
+        x_pos=60;
+        base =0;
+        colours.forEach(function (colour){
+            svg.append("text").attr("x",x_pos).attr("class", "legend_text").attr("y",height+100).text(Math.round(base)).style("font-size", "15px");
+            x_pos = x_pos + 50; base+=increment;
+        });
+      };
+    });
+
+  </script>
+</body>

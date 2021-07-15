@@ -1,0 +1,37 @@
+.line {
+    fill: none;
+    stroke: #ffab00;
+    stroke-width: 1;
+}
+  
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+/* Style the dots by assigning a fill and stroke */
+.dot {
+    fill: #ffab00;
+    stroke: #fff;
+}
+
+.pagebreak {
+    page-break-after: always;  /* page-break-after works, as well */
+}
+
+.focus circle {
+  fill: #ffab00;
+  stroke: steelblue;
+}
+#wrapper_a {
+	font-family: "Arial";
+}
+#wrapper_b {
+	font-family: "Arial";
+}
+#wrapper_c {
+	font-family: "Arial";
+}
+#wrapper_d {
+	font-family: "Arial";
+}
